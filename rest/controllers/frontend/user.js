@@ -1,8 +1,8 @@
 const UserModel = require("../../models/user/user.model");
+const utils = require("../../utils/index");
+const fs = require("fs");
 
-const fs = require("fs")
-
-const path = require("path")
+const path = require("path");
 
 class UserController {
   //用户注册
@@ -31,13 +31,31 @@ class UserController {
     if (!ishas) {
       return ctx.error({ msg: "账户或密码错误" });
     }
-    return ctx.success({ msg: "登录成功" });
+    let token = utils.generateToken({ name });
+    return ctx.success({ msg: "登录成功", data: { token } });
+  }
+  static async users(ctx) {
+    //获取用户
+    const { token } = ctx.header;
+    if (token) {
+      if (utils.verifyToken(token)) {
+        const list = await UserModel.find();
+        if (!list) {
+          return ctx.error({ msg: "获取用户列表失败" });
+        }
+        return ctx.success({ msg: "登录成功", data: { list } });
+      }else{
+        return ctx.error({ msg: "token错误" });
+      }
+    } else {
+      return ctx.error({ msg: "缺少参数" });
+    }
   }
   //文件上传
   static async upload(ctx) {
     const file = ctx.request.files;
     const reader = fs.createReadStream(file.filename.path);
-    let filePath = path.join(__dirname, "public/upload/") + `${file.filename.name}`;
+    let filePath = `${process.cwd()}/public/upload/${file.filename.name}`;
     // 创建可写流
     const upStream = fs.createWriteStream(filePath);
     // 可读流通过管道写入可写流
