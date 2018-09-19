@@ -44,8 +44,28 @@ class UserController {
           return ctx.error({ msg: "获取用户列表失败" });
         }
         return ctx.success({ msg: "登录成功", data: { list } });
-      }else{
-        return ctx.error({ msg: "token错误" });
+      } else {
+        return ctx.error({ msg: "token已过期" });
+      }
+    } else {
+      return ctx.error({ msg: "缺少参数" });
+    }
+  }
+  static async updataUser(ctx) {
+    const { token } = ctx.header;
+    const { name, tel, newTel } = ctx.request.body;
+    const conditions = { name, tel };
+    if (token) {
+      if (utils.verifyToken(token)) {
+        UserModel.update(conditions, { $set: { tel: newTel } }, (error) => {//callback return 不出去j
+          if (error) {
+            console.log(error);
+          } else {
+            console.log("Updata success")
+          }
+        });
+      } else {
+        return ctx.error({ msg: "token已过期" });
       }
     } else {
       return ctx.error({ msg: "缺少参数" });
